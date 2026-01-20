@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Movie Kart Web</title>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <py-config>
+        packages = ["pygame"]
+    </py-config>
+</head>
+<body style="background-color: #222; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+
+    <canvas id="canvas"></canvas>
+
+    <py-script>
+import pygame
+import asyncio
+import random
+
+# Configuración del juego
+pygame.init()
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+async def main():
+    px, py = 400, 500
+    bullets = []
+    enemies = []
+    score = 0
+    running = True
+
+    while running:
+        screen.fill((34, 139, 34)) # Pasto
+        pygame.draw.rect(screen, (50, 50, 50), (200, 0, 400, 600)) # Pista
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                bullets.append([px + 20, py])
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and px > 200: px -= 7
+        if keys[pygame.K_RIGHT] and px < 550: px += 7
+
+        # Dibujar Auto (DeLorean)
+        pygame.draw.rect(screen, (150, 150, 150), (px, py, 50, 80))
+        pygame.draw.rect(screen, (0, 255, 255), (px+5, py+10, 40, 20))
+
+        # Lógica de enemigos y disparos
+        if random.randint(1, 30) == 1:
+            enemies.append([random.randint(210, 540), -50])
+
+        for b in bullets[:]:
+            b[1] -= 10
+            pygame.draw.rect(screen, (255, 255, 0), (b[0], b[1], 5, 15))
+            if b[1] < 0: bullets.remove(b)
+
+        for e in enemies[:]:
+            e[1] += 5
+            pygame.draw.rect(screen, (200, 0, 0), (e[0], e[1], 50, 50))
+            if py < e[1] + 50 and py + 80 > e[1] and px < e[0] + 50 and px + 50 > e[0]:
+                score = 0 # Reset si chocas
+                enemies.clear()
+            
+            for b in bullets[:]:
+                if e[0] < b[0] < e[0]+50 and e[1] < b[1] < e[1]+50:
+                    enemies.remove(e)
+                    bullets.remove(b)
+                    score += 1
+
+        pygame.display.flip()
+        await asyncio.sleep(0) # IMPORTANTE: Esto hace que funcione en web
+
+asyncio.run(main())
+    </py-script>
+</body>
+</html>
